@@ -52,6 +52,8 @@
     "diffRemovedLineNumberBg": { "dark": "diffRemovedBgLight", "light": "diffRemovedBgLight" },
     "selectedListItemText": { "dark": "#FFFFFF", "light": "#FFFFFF" },
     "backgroundMenu": { "dark": "#FFF0D8", "light": "#FFF0D8" },
+    "selection": { "dark": "#2563EB", "light": "#2563EB" },
+    "selectionForeground": { "dark": "#FFFFFF", "light": "#FFFFFF" },
     "markdownText": { "dark": "textLight", "light": "textLight" },
     "markdownHeading": { "dark": "amberDark", "light": "amberDark" },
     "markdownLink": { "dark": "tealDark", "light": "tealDark" },
