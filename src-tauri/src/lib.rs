@@ -217,14 +217,6 @@ fn list_embedded_themes() -> Vec<String> {
     themes
 }
 
-#[tauri::command]
-fn read_theme_content(name: String) -> Result<String, String> {
-    let file = format!("{}.json", name.trim_end_matches(".json"));
-    let data = ThemesAsset::get(&file).ok_or_else(|| format!("主题 '{}' 不存在", name))?;
-    let text = std::str::from_utf8(data.data.as_ref()).map_err(|e| e.to_string())?;
-    Ok(text.to_string())
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -251,7 +243,6 @@ pub fn run() {
             read_tui_config,
             write_tui_config,
             list_embedded_themes,
-            read_theme_content,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
