@@ -275,6 +275,24 @@ fn sync_author_config() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn reset_tui_config() -> Result<(), String> {
+    let opencode = find_opencode_dir()?;
+    let config = serde_json::json!({
+        "theme": "ember-glow",
+        "diff_style": "auto",
+        "attention": {
+            "enabled": false,
+            "notifications": false,
+            "sound": false,
+            "volume": 0.4
+        }
+    });
+    let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
+    fs::write(opencode.join("tui.json"), json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -305,6 +323,7 @@ pub fn run() {
             import_theme,
             remove_theme,
             sync_author_config,
+            reset_tui_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

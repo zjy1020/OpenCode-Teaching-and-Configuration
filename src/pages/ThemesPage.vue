@@ -49,6 +49,18 @@ async function handleRemove() {
   }
 }
 
+async function handleReset() {
+  working.value = true
+  error.value = ''
+  try {
+    await invoke('reset_tui_config')
+  } catch (e: any) {
+    error.value = String(e)
+  } finally {
+    working.value = false
+  }
+}
+
 async function handleSync() {
   working.value = true
   error.value = ''
@@ -80,6 +92,10 @@ async function handleSync() {
         <button class="toolbar-btn primary" :disabled="scanning || working" @click="handleSync">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
           同步作者配置
+        </button>
+        <button class="toolbar-btn" :disabled="scanning || working" @click="handleReset">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          恢复默认
         </button>
       </div>
     </div>

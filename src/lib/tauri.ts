@@ -51,6 +51,7 @@ export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Pr
     case 'import_theme': return undefined as T
     case 'remove_theme': return undefined as T
     case 'sync_author_config': return undefined as T
+    case 'reset_tui_config': return undefined as T
     default: throw new Error(`Unknown command: ${cmd}`)
   }
 }
