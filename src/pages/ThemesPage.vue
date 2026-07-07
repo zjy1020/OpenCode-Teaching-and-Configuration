@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import TuiConfigForm from '../components/TuiConfigForm.vue'
 import { invoke } from '../lib/tauri'
 
 const installed = ref(false)
@@ -111,7 +110,6 @@ async function handleSync() {
       </div>
     </div>
 
-    <TuiConfigForm />
   </div>
 </template>
 
