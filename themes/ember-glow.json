@@ -50,7 +50,7 @@
     "diffLineNumber": { "dark": "mutedLight", "light": "mutedLight" },
     "diffAddedLineNumberBg": { "dark": "diffAddedBgLight", "light": "diffAddedBgLight" },
     "diffRemovedLineNumberBg": { "dark": "diffRemovedBgLight", "light": "diffRemovedBgLight" },
-    "selectedListItemText": { "dark": "amber", "light": "amber" },
+    "selectedListItemText": { "dark": "#FFFFFF", "light": "#FFFFFF" },
     "backgroundMenu": { "dark": "#FFF0D8", "light": "#FFF0D8" },
     "markdownText": { "dark": "textLight", "light": "textLight" },
     "markdownHeading": { "dark": "amberDark", "light": "amberDark" },
