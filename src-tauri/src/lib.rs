@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use rust_embed::Embed;
+use serde::{Serialize, Deserialize};
 
 #[derive(Embed)]
 #[folder = "../skills"]
@@ -9,6 +10,40 @@ struct SkillsAsset;
 #[derive(Embed)]
 #[folder = "../commands"]
 struct CommandsAsset;
+
+#[derive(Embed)]
+#[folder = "../themes"]
+struct ThemesAsset;
+
+#[derive(Serialize, Deserialize, Clone)]
+struct AttentionConfig {
+    enabled: bool,
+    notifications: bool,
+    sound: bool,
+    volume: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct TuiConfig {
+    theme: String,
+    diff_style: String,
+    attention: AttentionConfig,
+}
+
+impl Default for TuiConfig {
+    fn default() -> Self {
+        Self {
+            theme: "tokyonight".into(),
+            diff_style: "auto".into(),
+            attention: AttentionConfig {
+                enabled: true,
+                notifications: true,
+                sound: true,
+                volume: 0.4,
+            },
+        }
+    }
+}
 
 fn find_opencode_dir() -> Result<PathBuf, String> {
     let home = dirs::home_dir().ok_or("无法获取用户目录")?;
@@ -135,6 +170,53 @@ fn remove_command(name: String) -> Result<(), String> {
     Ok(())
 }
 
+fn tui_config_path() -> Result<PathBuf, String> {
+    Ok(find_opencode_dir()?.join("tui.json"))
+}
+
+#[tauri::command]
+fn read_tui_config() -> Result<TuiConfig, String> {
+    let path = tui_config_path()?;
+    if !path.exists() {
+        return Ok(TuiConfig::default());
+    }
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn write_tui_config(config: TuiConfig) -> Result<(), String> {
+    let opencode = find_opencode_dir()?;
+
+    let path = opencode.join("tui.json");
+    let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| e.to_string())?;
+
+    let theme_name = config.theme.trim_end_matches(".json");
+    let theme_file = format!("{}.json", theme_name);
+
+    let dst_dir = opencode.join("themes");
+    fs::create_dir_all(&dst_dir).map_err(|e| e.to_string())?;
+    let dst_path = dst_dir.join(&theme_file);
+
+    if !dst_path.exists() {
+        if let Some(data) = ThemesAsset::get(&theme_file) {
+            fs::write(&dst_path, data.data).map_err(|e| e.to_string())?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+fn list_embedded_themes() -> Vec<String> {
+    let mut themes: Vec<String> = ThemesAsset::iter()
+        .map(|p| p.as_ref().trim_end_matches(".json").to_string())
+        .collect();
+    themes.sort();
+    themes
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -158,6 +240,9 @@ pub fn run() {
             remove_skill,
             remove_command,
             open_folder,
+            read_tui_config,
+            write_tui_config,
+            list_embedded_themes,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

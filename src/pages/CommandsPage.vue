@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import CommandList from '../components/CommandList.vue'
+import TuiConfigForm from '../components/TuiConfigForm.vue'
 import { embeddedCommands } from '../data/commands'
 import { useScanner } from '../composables/useScanner'
 import { useImport } from '../composables/useImport'
@@ -95,6 +96,7 @@ const available = embeddedCommands.filter(c => !localCommands.value.includes(c.n
     <div v-if="error" class="error-banner">{{ error }}</div>
     <p v-if="scanning" class="loading-text">扫描中...</p>
     <CommandList v-else :local-commands="localCommands" @import="handleImport" @uninstall="handleUninstall" />
+    <TuiConfigForm />
   </div>
 </template>
 
