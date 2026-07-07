@@ -59,6 +59,15 @@ fn find_opencode_dir() -> Result<PathBuf, String> {
     }
 }
 
+fn both_opencode_dirs() -> Result<(PathBuf, PathBuf), String> {
+    let home = dirs::home_dir().ok_or("无法获取用户目录")?;
+    let xdg = home.join(".config").join("opencode");
+    let legacy = home.join(".opencode");
+    fs::create_dir_all(&xdg).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&legacy).map_err(|e| e.to_string())?;
+    Ok((xdg, legacy))
+}
+
 #[tauri::command]
 fn get_opencode_dir() -> Result<String, String> {
     let path = find_opencode_dir()?;
@@ -106,6 +115,7 @@ fn scan_commands() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn import_skill(name: String) -> Result<(), String> {
+    let (xdg, legacy) = both_opencode_dirs()?;
     let prefix = format!("{}/", name);
     let mut count = 0u32;
     for path in SkillsAsset::iter() {
@@ -113,13 +123,14 @@ fn import_skill(name: String) -> Result<(), String> {
         if path_str == name.as_str() || path_str.starts_with(&prefix) {
             count += 1;
             let relative = path_str.strip_prefix(&prefix).unwrap_or("");
-            let opencode = find_opencode_dir()?;
-            let target = opencode.join("skills").join(&name).join(relative);
-            if let Some(parent) = target.parent() {
-                fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-            }
             let data = SkillsAsset::get(&path).ok_or("读取嵌入技能文件失败")?;
-            fs::write(&target, data.data).map_err(|e| e.to_string())?;
+            for base in [&xdg, &legacy] {
+                let target = base.join("skills").join(&name).join(relative);
+                if let Some(parent) = target.parent() {
+                    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                }
+                fs::write(&target, data.data.as_ref()).map_err(|e| e.to_string())?;
+            }
         }
     }
     if count == 0 {
@@ -130,23 +141,31 @@ fn import_skill(name: String) -> Result<(), String> {
 
 #[tauri::command]
 fn remove_skill(name: String) -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
-    let dir = opencode.join("skills").join(&name);
-    if !dir.exists() {
+    let (xdg, legacy) = both_opencode_dirs()?;
+    let mut found = false;
+    for base in [&xdg, &legacy] {
+        let dir = base.join("skills").join(&name);
+        if dir.exists() {
+            fs::remove_dir_all(&dir).map_err(|e| e.to_string())?;
+            found = true;
+        }
+    }
+    if !found {
         return Err(format!("技能 '{}' 未安装", name));
     }
-    fs::remove_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 fn import_command(name: String) -> Result<(), String> {
+    let (xdg, legacy) = both_opencode_dirs()?;
     let filename = format!("{}.md", name);
     let data = CommandsAsset::get(&filename).ok_or(format!("命令 '{}' 不存在", name))?;
-    let opencode = find_opencode_dir()?;
-    let dst_dir = opencode.join("commands");
-    fs::create_dir_all(&dst_dir).map_err(|e| e.to_string())?;
-    fs::write(dst_dir.join(&filename), data.data).map_err(|e| e.to_string())?;
+    for base in [&xdg, &legacy] {
+        let dst_dir = base.join("commands");
+        fs::create_dir_all(&dst_dir).map_err(|e| e.to_string())?;
+        fs::write(dst_dir.join(&filename), data.data.as_ref()).map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
@@ -161,12 +180,18 @@ fn open_folder(path: String) -> Result<(), String> {
 
 #[tauri::command]
 fn remove_command(name: String) -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
-    let file = opencode.join("commands").join(format!("{}.md", name));
-    if !file.exists() {
+    let (xdg, legacy) = both_opencode_dirs()?;
+    let mut found = false;
+    for base in [&xdg, &legacy] {
+        let file = base.join("commands").join(format!("{}.md", name));
+        if file.exists() {
+            fs::remove_file(&file).map_err(|e| e.to_string())?;
+            found = true;
+        }
+    }
+    if !found {
         return Err(format!("命令 '{}' 未安装", name));
     }
-    fs::remove_file(&file).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -186,25 +211,11 @@ fn read_tui_config() -> Result<TuiConfig, String> {
 
 #[tauri::command]
 fn write_tui_config(config: TuiConfig) -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
-
-    let path = opencode.join("tui.json");
+    let (xdg, legacy) = both_opencode_dirs()?;
     let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    fs::write(&path, json).map_err(|e| e.to_string())?;
-
-    let theme_name = config.theme.trim_end_matches(".json");
-    let theme_file = format!("{}.json", theme_name);
-
-    let dst_dir = opencode.join("themes");
-    fs::create_dir_all(&dst_dir).map_err(|e| e.to_string())?;
-    let dst_path = dst_dir.join(&theme_file);
-
-    if !dst_path.exists() {
-        if let Some(data) = ThemesAsset::get(&theme_file) {
-            fs::write(&dst_path, data.data).map_err(|e| e.to_string())?;
-        }
+    for base in [&xdg, &legacy] {
+        fs::write(base.join("tui.json"), &json).map_err(|e| e.to_string())?;
     }
-
     Ok(())
 }
 
@@ -228,37 +239,43 @@ fn check_theme_installed() -> bool {
 
 #[tauri::command]
 fn import_theme() -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
-    let dst = opencode.join("themes").join("ember-glow.json");
-    if dst.exists() {
-        return Err("主题已安装，无需重复导入".into());
-    }
+    let (xdg, legacy) = both_opencode_dirs()?;
     let data = ThemesAsset::get("ember-glow.json").ok_or("读取嵌入主题失败")?;
-    fs::create_dir_all(dst.parent().unwrap()).map_err(|e| e.to_string())?;
-    fs::write(&dst, data.data).map_err(|e| e.to_string())?;
+    let mut installed = false;
+    for base in [&xdg, &legacy] {
+        let dst = base.join("themes").join("ember-glow.json");
+        let parent = dst.parent().unwrap();
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        fs::write(&dst, data.data.as_ref()).map_err(|e| e.to_string())?;
+        if dst.exists() { installed = true; }
+    }
+    if !installed {
+        return Err("写入主题失败".into());
+    }
     Ok(())
 }
 
 #[tauri::command]
 fn remove_theme() -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
-    let file = opencode.join("themes").join("ember-glow.json");
-    if !file.exists() {
+    let (xdg, legacy) = both_opencode_dirs()?;
+    let mut found = false;
+    for base in [&xdg, &legacy] {
+        let file = base.join("themes").join("ember-glow.json");
+        if file.exists() {
+            fs::remove_file(&file).map_err(|e| e.to_string())?;
+            found = true;
+        }
+    }
+    if !found {
         return Err("主题未安装，无法卸载".into());
     }
-    fs::remove_file(&file).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 fn sync_author_config() -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
-
-    let dst = opencode.join("themes").join("ember-glow.json");
+    let (xdg, legacy) = both_opencode_dirs()?;
     let data = ThemesAsset::get("ember-glow.json").ok_or("读取嵌入主题失败")?;
-    fs::create_dir_all(dst.parent().unwrap()).map_err(|e| e.to_string())?;
-    fs::write(&dst, data.data).map_err(|e| e.to_string())?;
-
     let config = serde_json::json!({
         "theme": "ember-glow",
         "diff_style": "stacked",
@@ -270,14 +287,18 @@ fn sync_author_config() -> Result<(), String> {
         }
     });
     let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    fs::write(opencode.join("tui.json"), json).map_err(|e| e.to_string())?;
-
+    for base in [&xdg, &legacy] {
+        let dst = base.join("themes").join("ember-glow.json");
+        fs::create_dir_all(dst.parent().unwrap()).map_err(|e| e.to_string())?;
+        fs::write(&dst, data.data.as_ref()).map_err(|e| e.to_string())?;
+        fs::write(base.join("tui.json"), &json).map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
 #[tauri::command]
 fn reset_tui_config() -> Result<(), String> {
-    let opencode = find_opencode_dir()?;
+    let (xdg, legacy) = both_opencode_dirs()?;
     let config = serde_json::json!({
         "theme": "ember-glow",
         "diff_style": "auto",
@@ -289,7 +310,9 @@ fn reset_tui_config() -> Result<(), String> {
         }
     });
     let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    fs::write(opencode.join("tui.json"), json).map_err(|e| e.to_string())?;
+    for base in [&xdg, &legacy] {
+        fs::write(base.join("tui.json"), &json).map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
