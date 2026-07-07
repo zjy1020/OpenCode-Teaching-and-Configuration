@@ -20,8 +20,6 @@ const config = ref<TuiConfig>({
   diff_style: 'auto',
   attention: { enabled: true, notifications: true, sound: true, volume: 0.4 },
 })
-const saving = ref(false)
-const status = ref('')
 
 onMounted(async () => {
   try {
@@ -29,25 +27,12 @@ onMounted(async () => {
     config.value = c
   } catch {}
 })
-
-async function handleSave() {
-  saving.value = true
-  status.value = ''
-  try {
-    await invoke('write_tui_config', { config: JSON.parse(JSON.stringify(config.value)) })
-    status.value = 'success'
-  } catch (e: any) {
-    status.value = `error: ${e}`
-  }
-  saving.value = false
-  setTimeout(() => { status.value = '' }, 3000)
-}
 </script>
 
 <template>
   <div class="config-section">
     <h3 class="config-heading">OpenCode TUI 配置</h3>
-    <p class="config-desc">一键写入 ~/.config/opencode/tui.json</p>
+    <p class="config-desc">当前 TUI 配置（由"同步作者配置"管理）</p>
 
     <div class="config-grid">
       <div class="field">
@@ -92,14 +77,7 @@ async function handleSave() {
       </div>
     </div>
 
-    <div class="action-row">
-      <button class="save-btn" :disabled="saving" @click="handleSave">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        {{ saving ? '写入中...' : '一键写入配置' }}
-      </button>
-      <span v-if="status === 'success'" class="status-ok">✅ 已写入</span>
-      <span v-else-if="status" class="status-err">{{ status }}</span>
-    </div>
+
   </div>
 </template>
 
@@ -224,45 +202,5 @@ async function handleSave() {
   width: 100%;
   max-width: 240px;
   accent-color: #d97706;
-}
-.action-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-.save-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 1.2rem;
-  border-radius: 20px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: none;
-  background: #fbbf24;
-  color: #78350f;
-  cursor: pointer;
-  box-shadow: 3px 3px 6px rgba(146, 64, 14, 0.12);
-  transition: all 0.15s;
-}
-.save-btn:hover:not(:disabled) {
-  opacity: 0.85;
-}
-.save-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.status-ok {
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.85rem;
-  color: #059669;
-  font-weight: 600;
-}
-.status-err {
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.8rem;
-  color: #dc2626;
 }
 </style>
