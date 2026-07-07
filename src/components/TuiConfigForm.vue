@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { invoke } from '../lib/tauri'
 
 interface Attention {
@@ -15,7 +15,6 @@ interface TuiConfig {
   attention: Attention
 }
 
-const builtinThemes = ['tokyonight', 'nord', 'catppuccin']
 const embeddedThemes = ref<string[]>([])
 const config = ref<TuiConfig>({
   theme: 'tokyonight',
@@ -24,8 +23,6 @@ const config = ref<TuiConfig>({
 })
 const saving = ref(false)
 const status = ref('')
-
-const allThemes = computed(() => [...builtinThemes, ...embeddedThemes.value])
 
 onMounted(async () => {
   try {
@@ -60,8 +57,8 @@ async function handleSave() {
       <div class="field">
         <label class="field-label">主题 Theme</label>
         <select v-model="config.theme" class="select-input">
-          <option v-for="t in allThemes" :key="t" :value="t">{{ t }}</option>
-          <option value="__custom__">自定义...</option>
+          <option v-for="t in embeddedThemes" :key="t" :value="t">{{ t }}</option>
+          <option value="__custom__">输入自定义主题名...</option>
         </select>
         <input
           v-if="config.theme === '__custom__'"

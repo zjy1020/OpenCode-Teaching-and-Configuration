@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import SkillList from '../components/SkillList.vue'
-import TuiConfigForm from '../components/TuiConfigForm.vue'
 import { embeddedSkills } from '../data/skills'
 import { useScanner } from '../composables/useScanner'
 import { useImport } from '../composables/useImport'
@@ -96,7 +95,6 @@ const available = embeddedSkills.filter(s => !localSkills.value.includes(s.name)
     <div v-if="error" class="error-banner">{{ error }}</div>
     <p v-if="scanning" class="loading-text">扫描中...</p>
     <SkillList v-else :local-skills="localSkills" @import="handleImport" @uninstall="handleUninstall" />
-    <TuiConfigForm />
   </div>
 </template>
 

@@ -23,6 +23,11 @@ const router = createRouter({
       name: 'commands',
       component: () => import('../pages/CommandsPage.vue'),
     },
+    {
+      path: '/themes',
+      name: 'themes',
+      component: () => import('../pages/ThemesPage.vue'),
+    },
   ],
 })
 
