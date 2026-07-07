@@ -1,4 +1,4 @@
----
+﻿---
 description: 前端设计方案生成器。加载 frontend-design + ui-ux-pro-max 两个 skill，读取项目文档和计划生成多套方案，HTML 对比预览，自动打开浏览器查看。
 ---
 
