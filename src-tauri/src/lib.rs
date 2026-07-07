@@ -33,7 +33,7 @@ struct TuiConfig {
 impl Default for TuiConfig {
     fn default() -> Self {
         Self {
-            theme: "tokyonight".into(),
+            theme: "ember-glow".into(),
             diff_style: "auto".into(),
             attention: AttentionConfig {
                 enabled: true,

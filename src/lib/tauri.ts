@@ -37,7 +37,7 @@ export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Pr
       case 'remove_skill': return undefined as T
       case 'remove_command': return undefined as T
       case 'open_folder': return undefined as T
-      case 'read_tui_config': return { theme: 'tokyonight', diff_style: 'auto', attention: { enabled: true, notifications: true, sound: true, volume: 0.4 } } as T
+      case 'read_tui_config': return { theme: 'ember-glow', diff_style: 'auto', attention: { enabled: true, notifications: true, sound: true, volume: 0.4 } } as T
       case 'write_tui_config': return undefined as T
       case 'list_embedded_themes': return ['ember-glow'] as T
       default: throw new Error(`Unknown command: ${cmd}`)
