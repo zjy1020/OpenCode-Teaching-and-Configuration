@@ -217,6 +217,64 @@ fn list_embedded_themes() -> Vec<String> {
     themes
 }
 
+#[tauri::command]
+fn check_theme_installed() -> bool {
+    let opencode = find_opencode_dir().ok();
+    match opencode {
+        Some(d) => d.join("themes").join("ember-glow.json").exists(),
+        None => false,
+    }
+}
+
+#[tauri::command]
+fn import_theme() -> Result<(), String> {
+    let opencode = find_opencode_dir()?;
+    let dst = opencode.join("themes").join("ember-glow.json");
+    if dst.exists() {
+        return Err("主题已安装，无需重复导入".into());
+    }
+    let data = ThemesAsset::get("ember-glow.json").ok_or("读取嵌入主题失败")?;
+    fs::create_dir_all(dst.parent().unwrap()).map_err(|e| e.to_string())?;
+    fs::write(&dst, data.data).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn remove_theme() -> Result<(), String> {
+    let opencode = find_opencode_dir()?;
+    let file = opencode.join("themes").join("ember-glow.json");
+    if !file.exists() {
+        return Err("主题未安装，无法卸载".into());
+    }
+    fs::remove_file(&file).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn sync_author_config() -> Result<(), String> {
+    let opencode = find_opencode_dir()?;
+
+    let dst = opencode.join("themes").join("ember-glow.json");
+    let data = ThemesAsset::get("ember-glow.json").ok_or("读取嵌入主题失败")?;
+    fs::create_dir_all(dst.parent().unwrap()).map_err(|e| e.to_string())?;
+    fs::write(&dst, data.data).map_err(|e| e.to_string())?;
+
+    let config = serde_json::json!({
+        "theme": "ember-glow",
+        "diff_style": "stacked",
+        "attention": {
+            "enabled": true,
+            "notifications": true,
+            "sound": true,
+            "volume": 0.4
+        }
+    });
+    let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
+    fs::write(opencode.join("tui.json"), json).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -243,6 +301,10 @@ pub fn run() {
             read_tui_config,
             write_tui_config,
             list_embedded_themes,
+            check_theme_installed,
+            import_theme,
+            remove_theme,
+            sync_author_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
