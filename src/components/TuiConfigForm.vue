@@ -58,15 +58,7 @@ async function handleSave() {
         <label class="field-label">主题 Theme</label>
         <select v-model="config.theme" class="select-input">
           <option v-for="t in embeddedThemes" :key="t" :value="t">{{ t }}</option>
-          <option value="__custom__">输入自定义主题名...</option>
         </select>
-        <input
-          v-if="config.theme === '__custom__'"
-          v-model="config.theme"
-          placeholder="输入主题文件名（不含 .json）"
-          class="text-input"
-          style="margin-top: 0.4rem"
-        />
       </div>
 
       <div class="field">
