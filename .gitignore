@@ -1,0 +1,9 @@
+node_modules
+dist
+src-tauri/target
+vite-output.txt
+.superpowers/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+skills/agent-skill-creator/Dynamous/*.pdf
+skills/agent-skill-creator/Dynamous/*.png
