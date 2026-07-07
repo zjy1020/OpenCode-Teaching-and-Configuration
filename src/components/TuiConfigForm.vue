@@ -15,9 +15,8 @@ interface TuiConfig {
   attention: Attention
 }
 
-const embeddedThemes = ref<string[]>([])
 const config = ref<TuiConfig>({
-  theme: 'tokyonight',
+  theme: 'ember-glow',
   diff_style: 'auto',
   attention: { enabled: true, notifications: true, sound: true, volume: 0.4 },
 })
@@ -28,9 +27,6 @@ onMounted(async () => {
   try {
     const c = await invoke<TuiConfig>('read_tui_config')
     config.value = c
-  } catch {}
-  try {
-    embeddedThemes.value = await invoke<string[]>('list_embedded_themes')
   } catch {}
 })
 
@@ -56,9 +52,7 @@ async function handleSave() {
     <div class="config-grid">
       <div class="field">
         <label class="field-label">主题 Theme</label>
-        <select v-model="config.theme" class="select-input">
-          <option v-for="t in embeddedThemes" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <div class="theme-display">ember-glow</div>
       </div>
 
       <div class="field">
@@ -151,6 +145,15 @@ async function handleSave() {
   font-size: 0.78rem;
   color: #92400e;
   margin-bottom: 0.25rem;
+}
+.theme-display {
+  padding: 0.45rem 0.6rem;
+  border: 2px solid #d97706;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  background: #fffbeb;
+  color: #78350f;
 }
 .select-input {
   padding: 0.45rem 0.6rem;
